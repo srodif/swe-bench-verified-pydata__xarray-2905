@@ -218,7 +218,12 @@ def as_compatible_data(data, fastpath=False):
         data = np.timedelta64(getattr(data, "value", data), "ns")
 
     # we don't want nested self-described arrays
-    data = getattr(data, "values", data)
+    # Only extract values from pandas/xarray objects, not arbitrary objects
+    # Import DataArray and Dataset locally to avoid circular imports
+    from .dataarray import DataArray
+    from .dataset import Dataset
+    if isinstance(data, (pd.Series, pd.DataFrame, DataArray, Dataset)):
+        data = getattr(data, "values", data)
 
     if isinstance(data, np.ma.MaskedArray):
         mask = np.ma.getmaskarray(data)
